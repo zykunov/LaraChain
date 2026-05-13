@@ -10,5 +10,7 @@ interface StorageInterface
 
     public function get(): Chain;
 
+    public function getBlocks(int $chainId): array;
+
 
 }
