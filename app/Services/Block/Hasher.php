@@ -2,15 +2,17 @@
 
 namespace App\Services\Block;
 
-use App\Entity\Block;
+use App\Models\Block;
+
 
 class Hasher
 {
     public function makeHash(Block $block): string
     {
+
         return hash(
             'sha256',
-            $block->getHash() . $block->getIndex() . $block->getHash() . $block->getTimestamp()
+            $block->getTimestampAttribute() . $block->getPreviousHashAttribute()
         );
     }
 }

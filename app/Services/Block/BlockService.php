@@ -2,10 +2,10 @@
 
 namespace App\Services\Block;
 
-use App\Entity\Block;
+use App\Models\Block;
 use App\Services\Chain\ChainService;
-use App\Services\Chain\Storage\DatabaseStorage;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Collection;
 
 class BlockService
 {
@@ -13,40 +13,50 @@ class BlockService
     private ChainService $chainService;
     private Hasher $hasher;
 
-    private DatabaseStorage $storage;
 
-    public function __construct(ChainService $chainService, Hasher $hasher, DatabaseStorage $storage)
+    public function __construct(ChainService $chainService, Hasher $hasher)
     {
         $this->chainService = $chainService;
         $this->hasher = $hasher;
-        $this->storage = $storage;
     }
 
     public function createNewBlock(Request $request): Block
     {
 
-        $request->validate([
-            'data' => 'required|string',
+        $data = $request->input('data');
+        $chainId = $request->input('chainId');
+
+        $prevBlock = $this->getLastBlock($chainId);
+        $prevHash = $prevBlock->getHashAttribute();
+
+        $block = new Block([
+            'chain_id' => $chainId,
+            'data' => $data,
+            'previous_hash' => $prevHash,
+            'timestamp' => time(),
         ]);
 
-        $prevBlock =  $this->chainService->getLastBlock();
+        $block->hash = $this->hasher->makeHash($block);
 
-        $index = $prevBlock->getIndex() + 1 ;
-        $prevHash = $prevBlock->getHash();
-
-        $block = new Block($index, $prevHash, $data);
-
-        $hash = $this->hasher->makeHash($block);
-        $block->setHash($hash);
-
-        dd(1);
+        // Сохраняем блок в базу данных
+        $block->save();
 
         return $block;
     }
 
-    public function getBlocks(int $chainId): array
+
+    public function getBlocks(string|int $chainId): Collection
     {
-        return \App\Models\Block::where('chain_id', $chainId)->get()->toArray();
+        return Block::where('chain_id', $chainId)
+            ->orderBy('id', 'asc')
+            ->get();
+    }
+
+    public function getLastBlock(int $chainId): Block
+    {
+        return Block::where('chain_id', $chainId)
+            ->orderBy('id', 'desc')
+            ->firstOrFail();
     }
 
     public function saveCurrentBlock(Block $block): Block

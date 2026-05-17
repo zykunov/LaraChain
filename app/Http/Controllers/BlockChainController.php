@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Chain;
 use App\Services\Block\BlockService;
 use App\Services\Chain\ChainService;
-use App\Services\Chain\ChainHydrator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,17 +12,18 @@ class BlockchainController
 {
     private ChainService $chainService;
     private BlockService $blockService;
-    private ChainHydrator $chainHydrator;
 
     /**
      * @param ChainService $chainService
      * @param BlockService $blockService
      */
-    public function __construct(ChainService $chainService, BlockService $blockService, ChainHydrator $chainHydrator)
+    public function __construct(
+        ChainService $chainService,
+        BlockService $blockService,
+    )
     {
         $this->chainService = $chainService;
         $this->blockService = $blockService;
-        $this->chainHydrator = $chainHydrator;
     }
 
     /**
@@ -36,30 +36,71 @@ class BlockchainController
         $data = $request->input('data');
 
         $newBlock = $this->blockService->createNewBlock($data);
-        $currentChain = $this->chainService->appendNewBlock($newBlock);
-        $this->chainService->saveCurrentChain($currentChain);
+//        $currentChain = $this->chainService->appendNewBlock($newBlock);
+//        $this->chainService->saveCurrentChain($currentChain);
 
         return response()->json(['success' => true], 201);
     }
 
     public function show(): JsonResponse
     {
-        $currentChain = $this->chainService->getCurrentChain();
-        $response = $this->chainHydrator->extract($currentChain);
+        $response = $this->chainService->getCurrentChain();
 
-        return response()->json(['chain' => $response]);
+        return response()->json($response);
     }
 
+    /**
+     * Получение всех цепочек
+     * @return JsonResponse
+     */
     public function allChains(): JsonResponse
     {
-        $chains = Chain::all();
-        return response()->json($chains);
+        return response()->json($this->chainService->getChains());
     }
 
-    public function showChain($id): JsonResponse
+    /**
+     * Получение цепочки по id
+     * @param $id
+     * @return JsonResponse
+     */
+    public function getBlocksByChainId(string|int $id): JsonResponse
     {
-        $chain = $this->blockService->getBlocks($id);
-        return response()->json($chain);
+        $chainId = (int) $id;
+
+        if ($chainId <= 0) {
+            return response()->json([
+                'error' => 'ID цепочки должен быть положительным целым числом'
+            ], 400);
+        }
+
+        $blocks = $this->blockService->getBlocks($chainId);
+        return response()->json($blocks);
+    }
+
+    public function addBlock(Request $request): JsonResponse
+    {
+        $validator = \Validator::make($request->all(), [
+            'data' => 'required|string',
+            'chainId' => 'required|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка валидации данных',
+                'errors' => $validator->errors()->toArray(),
+                'timestamp' => now()->toIso8601String(),
+            ], 422);
+        }
+
+        if (!$this->chainService->checkChain($request->input('chainId'))) {
+            return response()->json(['error' => "Цепи с указанным id не существует"]);
+        }
+
+        $block = $this->blockService->createNewBlock($request);
+
+        return response()->json(['success' => true, 'block' => $block], 201);
+
     }
 }
 

@@ -2,7 +2,7 @@
 
 namespace App\Services\Chain;
 
-use App\Entity\Chain;
+use App\Models\Chain;
 use App\Services\Block\BlockValidator;
 
 class ChainValidator
@@ -16,7 +16,7 @@ class ChainValidator
 
     public function validate(Chain $chain)
     {
-        $blocks = $chain->getBlocks();
+        $blocks = $chain->getBlocksAttribute();
 
 
         for ($i = 1; $i < count($blocks); $i++) {

@@ -2,7 +2,7 @@
 
 namespace App\Services\Block;
 
-use App\Entity\Block;
+use App\Models\Block;
 
 class BlockValidator
 {
@@ -15,15 +15,15 @@ class BlockValidator
 
     public function validate(Block $oldBlock, Block $newBlock): bool
     {
-        if ($oldBlock->getHash() !== $newBlock->getPreviousHash()) {
+        if ($oldBlock->getHashAttribute() !== $newBlock->getPreviousHashAttribute()) {
             return false;
         }
 
-        if ($oldBlock->getIndex() + 1 !== $newBlock->getIndex()) {
+        if ($oldBlock->getIndexAttribute() + 1 !== $newBlock->getIndexAttribute()) {
             return false;
         }
 
-        if ($this->hasher->makeHash($newBlock) !== $newBlock->getHash()) {
+        if ($this->hasher->makeHash($newBlock) !== $newBlock->getHashAttribute()) {
             return false;
         }
 

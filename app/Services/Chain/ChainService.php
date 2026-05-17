@@ -2,55 +2,39 @@
 
 namespace App\Services\Chain;
 
-use App\Entity\Block;
-use App\Entity\Chain;
-use App\Services\Chain\Storage\BDStorage;
-use App\Services\Chain\Storage\DatabaseStorage;
+use App\Models\Block;
+use App\Models\Chain;
+use Illuminate\Database\Eloquent\Collection;
 
 class ChainService
 {
     private ChainValidator $chainValidator;
-    private DatabaseStorage $storage;
 
-    public function __construct(ChainValidator $chainValidator, DatabaseStorage $storage)
+    public function __construct(ChainValidator $chainValidator)
     {
         $this->chainValidator = $chainValidator;
-        $this->storage = $storage;
     }
 
-    public function addNewBlock(Block $block): Chain
+    public function getChains(): Collection
     {
-        $currentChain = $this->getCurrentChain();
+        return Chain::all();
+    }
 
-        $blocks = $currentChain->getBlocks();
-        $blocks[] = $block;
-
-        return $currentChain->update($blocks);
+    public function checkChain(int $chainId): bool
+    {
+        return Chain::where('id', $chainId)->exists();
     }
 
     public function getCurrentChain(): Chain
     {
-        return $this->storage->get();
+
     }
 
     public function saveCurrentChain(Chain $chain): void
     {
-        $isChainValid = $this->chainValidator->validate($chain);
 
-        if (!$isChainValid) {
-            throw new \Exception("chain validation failed");
-            //TODO: мб добавить логи или json для api
-        }
-
-        $this->storage->saveChainWithBlocks($chain);
 
     }
 
-    public function getLastBlock(): Block
-    {
-        $blocks = $this->getCurrentChain()->getBlocks();
-
-        return end($blocks);
-    }
 
 }

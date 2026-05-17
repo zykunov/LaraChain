@@ -23,9 +23,38 @@ class Block extends Model
         return $this->belongsTo(Chain::class);
     }
 
-    /**
-     * Мутатор для преобразования Unix‑timestamp в DATETIME
-     */
+
+    public function setHashAttribute(string $hash): void
+    {
+        $this->attributes['hash'] = $hash;
+    }
+
+    public function getIndexAttribute(): int
+    {
+        return $this->id;
+    }
+
+    public function getHashAttribute(): string
+    {
+        return $this->attributes['hash'];
+    }
+
+    public function getPreviousHashAttribute(): string
+    {
+        return $this->attributes['previous_hash'];
+    }
+
+
+    public function getDataAttribute(): string
+    {
+        return $this->attributes['data'];
+    }
+
+    public function getTimestampAttribute(): int
+    {
+        return strtotime($this->attributes['timestamp']);
+    }
+
     public function setTimestampAttribute($value): void
     {
         if (is_int($value)) {
@@ -34,14 +63,4 @@ class Block extends Model
             $this->attributes['timestamp'] = $value;
         }
     }
-
-    /**
-     * Аксессор для обратного преобразования (опционально)
-     */
-    public function getTimestampAttribute($value)
-    {
-        return strtotime($value); // возвращает Unix‑timestamp
-    }
-
-
 }

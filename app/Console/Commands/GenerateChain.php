@@ -2,14 +2,15 @@
 
 namespace App\Console\Commands;
 
-use App\Entity\Block;
-use App\Entity\Chain;
+
 use App\Services\Block\BlockService;
 use App\Services\Block\Hasher;
 use App\Services\Chain\ChainService;
 
 use Illuminate\Console\Command;
 
+
+//TODO: переделать на модели
 class GenerateChain extends Command
 {
     /** @var string $signature */
