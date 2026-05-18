@@ -21,10 +21,11 @@
             </nav>
         </aside>
 
-        <!-- 2. Основная область (Content) -->
-        <main class="flex-1 ml-64 p-6">
+
+        <main class="flex-1 ml-64 p-6 h-screen overflow-y-auto">
             <!-- Header -->
             <header class="flex items-center justify-between mb-6 border-b border-gray-200 pb-4">
+
                 <!-- Left: Search -->
                 <div class="flex items-center gap-4">
                     <input
@@ -54,8 +55,9 @@
                 </div>
             </header>
 
-            <router-view />
 
+            <!-- 2. Основная область (Content) -->
+            <router-view />
         </main>
     </div>
 </template>
