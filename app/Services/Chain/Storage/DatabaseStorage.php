@@ -52,11 +52,15 @@ class DatabaseStorage implements StorageInterface
 
     /**
      *
-     * @return Chain
+     * @return EntityChain
      */
     public function get(): EntityChain
     {
-        // Получаем последнюю добавленную цепочку (по ID)
-        return Chain::orderBy('id', 'desc')->first();
+
+    }
+
+    public function getBlocks(int $chainId): array
+    {
+        return Block::where('chain_id', $chainId)->get();
     }
 }

@@ -5,6 +5,7 @@ namespace App\Services\Block;
 use App\Entity\Block;
 use App\Services\Chain\ChainService;
 use App\Services\Chain\Storage\DatabaseStorage;
+use Illuminate\Http\Request;
 
 class BlockService
 {
@@ -21,8 +22,13 @@ class BlockService
         $this->storage = $storage;
     }
 
-    public function creatNewBlock(string $data): Block
+    public function createNewBlock(Request $request): Block
     {
+
+        $request->validate([
+            'data' => 'required|string',
+        ]);
+
         $prevBlock =  $this->chainService->getLastBlock();
 
         $index = $prevBlock->getIndex() + 1 ;
@@ -33,13 +39,18 @@ class BlockService
         $hash = $this->hasher->makeHash($block);
         $block->setHash($hash);
 
+        dd(1);
+
         return $block;
+    }
+
+    public function getBlocks(int $chainId): array
+    {
+        return \App\Models\Block::where('chain_id', $chainId)->get()->toArray();
     }
 
     public function saveCurrentBlock(Block $block): Block
     {
-
-        $block->
 
     }
 }

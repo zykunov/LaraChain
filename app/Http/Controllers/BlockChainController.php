@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Chain;
 use App\Services\Block\BlockService;
 use App\Services\Chain\ChainService;
 use App\Services\Chain\ChainHydrator;
@@ -41,13 +42,24 @@ class BlockchainController
         return response()->json(['success' => true], 201);
     }
 
-
     public function show(): JsonResponse
     {
         $currentChain = $this->chainService->getCurrentChain();
         $response = $this->chainHydrator->extract($currentChain);
 
         return response()->json(['chain' => $response]);
+    }
+
+    public function allChains(): JsonResponse
+    {
+        $chains = Chain::all();
+        return response()->json($chains);
+    }
+
+    public function showChain($id): JsonResponse
+    {
+        $chain = $this->blockService->getBlocks($id);
+        return response()->json($chain);
     }
 }
 
