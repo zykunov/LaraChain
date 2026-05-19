@@ -59,8 +59,5 @@ class BlockService
             ->firstOrFail();
     }
 
-    public function saveCurrentBlock(Block $block): Block
-    {
 
-    }
 }
