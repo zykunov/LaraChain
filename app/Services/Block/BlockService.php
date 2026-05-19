@@ -6,13 +6,12 @@ use App\Models\Block;
 use App\Services\Chain\ChainService;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class BlockService
 {
-
     private ChainService $chainService;
     private Hasher $hasher;
-
 
     public function __construct(ChainService $chainService, Hasher $hasher)
     {
@@ -22,9 +21,12 @@ class BlockService
 
     public function createNewBlock(Request $request): Block
     {
-
         $data = $request->input('data');
         $chainId = $request->input('chainId');
+
+        // 2. При создании нового блока принудительно удаляем кэш для этой цепочки
+        // чтобы при следующем запросе getBlocks/getLastBlock получили актуальные данные
+        $this->invalidateCache($chainId);
 
         $prevBlock = $this->getLastBlock($chainId);
         $prevHash = $prevBlock->getHashAttribute();
@@ -37,30 +39,37 @@ class BlockService
         ]);
 
         $block->hash = $this->hasher->makeHash($block);
-
-        // Сохраняем блок в базу данных
         $block->save();
 
         return $block;
     }
 
-
     public function getBlocks(string|int $chainId): Collection
     {
-        return Block::where('chain_id', $chainId)
-            ->orderBy('id', 'asc')
-            ->get();
+        $cacheKey = 'blocks:' . $chainId;
+
+        // Пытаемся получить данные из кэша. Если нет — сохраняем результат запроса в кэш на 1 минуту
+        return Cache::remember($cacheKey, 60, function () use ($chainId) {
+            return Block::where('chain_id', $chainId)
+                ->orderBy('id', 'asc')
+                ->get();
+        });
     }
 
     public function getLastBlock(int $chainId): Block
     {
-        return Block::where('chain_id', $chainId)
-            ->orderBy('id', 'desc')
-            ->firstOrFail();
+        $cacheKey = 'last_block:' . $chainId;
+
+        return Cache::remember($cacheKey, 60, function () use ($chainId) {
+            return Block::where('chain_id', $chainId)
+                ->orderBy('id', 'desc')
+                ->firstOrFail();
+        });
     }
 
-    public function saveCurrentBlock(Block $block): Block
+    private function invalidateCache(int $chainId): void
     {
-
+        Cache::forget('blocks:' . $chainId);
+        Cache::forget('last_block:' . $chainId);
     }
 }
