@@ -2,9 +2,9 @@
 
 namespace App\Services\Chain;
 
-use App\Models\Block;
 use App\Models\Chain;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class ChainService
 {
@@ -17,24 +17,31 @@ class ChainService
 
     public function getChains(): Collection
     {
-        return Chain::all();
+        $cacheKey = 'chains:all';
+
+        return Cache::remember($cacheKey, 120, function () {
+            return Chain::all();
+        });
     }
 
     public function checkChain(int $chainId): bool
     {
-        return Chain::where('id', $chainId)->exists();
+        $cacheKey = 'chain:exists:' . $chainId;
+
+        return Cache::remember($cacheKey, 120, function () use ($chainId) {
+            return Chain::where('id', $chainId)->exists();
+        });
     }
 
-    public function getCurrentChain(): Chain
+    /**
+     * Очищает кэш для всех цепочек и конкретной цепочки по ID
+     */
+    public function invalidateCache(?int $chainId = null): void
     {
+        if ($chainId !== null) {
+            Cache::forget('chain:exists:' . $chainId);
+        }
 
+        Cache::forget('chains:all');
     }
-
-    public function saveCurrentChain(Chain $chain): void
-    {
-
-
-    }
-
-
 }
