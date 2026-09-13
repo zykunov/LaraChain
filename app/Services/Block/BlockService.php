@@ -24,8 +24,6 @@ class BlockService
         $data = $request->input('data');
         $chainId = $request->input('chainId');
 
-        // 2. При создании нового блока принудительно удаляем кэш для этой цепочки
-        // чтобы при следующем запросе getBlocks/getLastBlock получили актуальные данные
         $this->invalidateCache($chainId);
 
         $prevBlock = $this->getLastBlock($chainId);
